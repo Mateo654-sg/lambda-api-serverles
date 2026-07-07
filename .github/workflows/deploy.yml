@@ -1,0 +1,34 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main # Cambia a 'master' si tu rama principal se llama así
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Descargar el código del repositorio
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. Configurar las credenciales de AWS de forma segura
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    # 3. Generar el archivo ZIP con el código
+    # Nota: Si usas subcarpetas, asegúrate de hacer "cd" antes de comprimir
+    - name: Zip Lambda function
+      run: |
+        zip -r function.zip . -x "*.git*" ".github*"
+
+    # 4. Subir el ZIP a AWS Lambda usando la CLI
+    - name: Deploy to AWS Lambda
+      run: |
+        aws lambda update-function-code --function-name api-serverless --zip-file fileb://function.zip
